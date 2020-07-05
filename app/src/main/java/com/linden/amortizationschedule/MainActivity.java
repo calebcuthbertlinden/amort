@@ -35,8 +35,6 @@ public class MainActivity extends AppCompatActivity {
     EditText interest;
     @BindView(R.id.term)
     EditText term;
-    @BindView(R.id.frequency)
-    EditText frequency;
     @BindView(R.id.progress_bar)
     ProgressBar progressBar;
 
@@ -99,6 +97,11 @@ public class MainActivity extends AppCompatActivity {
             paymentsObservable().subscribeWith(paymentDetails);
             paymentDetails.dispose();
         }).start();
+    }
+
+    @OnClick(R.id.btn_view_schedule)
+    public void viewSchedule (View view){
+
     }
 
     private void displaySchedule() {
