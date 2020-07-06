@@ -22,7 +22,6 @@ public class AmortizationAdapter extends RecyclerView.Adapter<AmortizationAdapte
         TextView interest;
         TextView principal;
         TextView endBalance;
-        TextView totalInterest;
 
         TermPaymentViewHolder(View itemView) {
             super(itemView);
@@ -31,7 +30,6 @@ public class AmortizationAdapter extends RecyclerView.Adapter<AmortizationAdapte
             interest = itemView.findViewById(R.id.interest);
             principal = itemView.findViewById(R.id.principal);
             endBalance = itemView.findViewById(R.id.end_balance);
-            totalInterest = itemView.findViewById(R.id.interest_paid);
         }
     }
 
@@ -54,10 +52,9 @@ public class AmortizationAdapter extends RecyclerView.Adapter<AmortizationAdapte
                 "R".concat(termPayments.get(position).getBalance().toString()));
         holder.payment.setText(
                 "R".concat(termPayments.get(position).getPayment().toString()));
-        holder.interest.setText("-");
-        holder.principal.setText("-");
-        holder.endBalance.setText("-");
-        holder.totalInterest.setText("-");
+        holder.interest.setText("R".concat(termPayments.get(position).getInterestPayment().toString()));
+        holder.principal.setText("R".concat(termPayments.get(position).getPrinciplePayment().toString()));
+        holder.endBalance.setText("R".concat(termPayments.get(position).getInterestBalance().toString()));
 
     }
 

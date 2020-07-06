@@ -32,10 +32,9 @@ public class ScheduleActivity extends AppCompatActivity {
     public static final String INTEREST_RATE = "INTEREST_RATE";
 
     @BindView(R.id.amortization_schedule) RecyclerView recyclerView;
-    @BindView(R.id.progress_bar) ProgressBar progressBar;
+    @BindView(R.id.schedule_progress_bar) ProgressBar progressBar;
 
     List<TermPaymentDetail> termPayments = new ArrayList<>();
-    DisposableObserver<List<TermPaymentDetail>> paymentDetails;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,42 +58,43 @@ public class ScheduleActivity extends AppCompatActivity {
         super.onResume();
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new AmortizationAdapter(termPayments);
-        recyclerView.setAdapter(adapter);
+        showProgress();
         createSchedule();
     }
 
-    @OnClick(R.id.btn_view_schedule)
+    @OnClick(R.id.export_table)
     public void exportTable (View view){
 
     }
 
     private void showProgress() {
-        runOnUiThread(() -> progressBar.setVisibility(View.VISIBLE));
+        progressBar.setVisibility(View.VISIBLE);
     }
 
     @SuppressLint("CheckResult")
     public void createSchedule() {
-        showProgress();
-        new Thread(() -> {
-            paymentsObservable().subscribeWith(new DisposableObserver<List<TermPaymentDetail>>() {
+        paymentsObservable().subscribeWith(new DisposableObserver<List<TermPaymentDetail>>() {
+            @Override
+            public void onNext(List<TermPaymentDetail> paymentDetails) {
+                termPayments = paymentDetails;
+                runOnUiThread(() -> displayScheduleTable());
+            }
 
-                @Override
-                public void onNext(List<TermPaymentDetail> paymentDetails) {
-                    termPayments = paymentDetails;
-                    runOnUiThread(() -> progressBar.setVisibility(View.GONE));
-                }
+            @Override
+            public void onError(Throwable e) {
+            }
 
-                @Override
-                public void onError(Throwable e) {
-                }
+            @Override
+            public void onComplete() {
+            }
+        }).dispose();
+    }
 
-                @Override
-                public void onComplete() {
-                }
-            });
-            paymentDetails.dispose();
-        }).start();
+    private void displayScheduleTable() {
+        recyclerView.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.GONE);
+        adapter = new AmortizationAdapter(termPayments);
+        recyclerView.setAdapter(adapter);
     }
 
     private Observable<List<TermPaymentDetail>> paymentsObservable() {
@@ -107,8 +107,13 @@ public class ScheduleActivity extends AppCompatActivity {
         double total = monthlyPaymentAmount * getIntent().getIntExtra(TERM_IN_MONTHS, 0);
         while (total > 0) {
             total = total - monthlyPaymentAmount;
-            monthly.add(new TermPaymentDetail(BigDecimal.valueOf(total), null, null,
-                    null, BigDecimal.valueOf(monthlyPaymentAmount)));
+            double interestPaid = monthlyPaymentAmount - (total*(getIntent().getDoubleExtra(INTEREST_RATE, 0)/12));
+            monthly.add(new TermPaymentDetail(
+                    BigDecimal.valueOf(total),
+                    BigDecimal.valueOf(Math.floor(total-(monthlyPaymentAmount-interestPaid))),
+                    BigDecimal.valueOf(Math.floor(interestPaid)),
+                    BigDecimal.valueOf(Math.floor(monthlyPaymentAmount-interestPaid)),
+                    BigDecimal.valueOf(Math.floor(monthlyPaymentAmount))));
         }
         return monthly;
     }
