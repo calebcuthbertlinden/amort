@@ -9,6 +9,7 @@ public class TermPaymentDetail {
     private BigDecimal interestPayment;
     private BigDecimal principlePayment;
     private BigDecimal payment;
+    private int period;
 
     TermPaymentDetail(BigDecimal balance, BigDecimal interestBalance, BigDecimal interestPayment,
                       BigDecimal principlePayment, BigDecimal payment) {
