@@ -1,5 +1,6 @@
 package com.linden.amortizationschedule;
 
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -9,6 +10,16 @@ public class FinanceUtil {
         NumberFormat format = NumberFormat.getCurrencyInstance(Locale.ENGLISH);
         String formatted =  format.format(value);
         return "R".concat(formatted.substring(1));
+    }
+
+    public static String getRandValue(BigDecimal value) {
+        NumberFormat format = NumberFormat.getCurrencyInstance(Locale.ENGLISH);
+        String formatted =  format.format(value);
+        return "R".concat(formatted.substring(1));
+    }
+
+    public static double interestPaid(double total, double monthlyPaymentAmount, double interestRate) {
+        return monthlyPaymentAmount - (total * (interestRate/12));
     }
 
     /**
@@ -49,6 +60,4 @@ public class FinanceUtil {
         }
         return retval;
     }
-
-
 }

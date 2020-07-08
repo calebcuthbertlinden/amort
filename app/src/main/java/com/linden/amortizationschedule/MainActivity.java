@@ -7,22 +7,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import java.math.BigDecimal;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableObserver;
 
 public class MainActivity extends AppCompatActivity {
@@ -52,10 +41,6 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    private void showProgress() {
-        runOnUiThread(() -> progressBar.setVisibility(View.VISIBLE));
-    }
-
     @OnClick(R.id.btn_calculate)
     public void createSchedule(View view) {
         showProgress();
@@ -82,21 +67,6 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    @OnClick(R.id.btn_view_schedule)
-    public void viewSchedule (View view){
-        startActivity(ScheduleActivity.getStartIntent(this, monthlyPaymentAmount, termInMonths, loanAmount, interestRate));
-    }
-
-    private void displayBreakdown() {
-        double balanceTotal = monthlyPaymentAmount * termInMonths;
-        runOnUiThread(() -> {
-            calculatedMonthlyPayment.setText(FinanceUtil.getRandValue(monthlyPaymentAmount));
-            calculatedTotalInterest.setText(FinanceUtil.getRandValue((balanceTotal-loanAmount)));
-            calculatedTotalAmount.setText(FinanceUtil.getRandValue(balanceTotal));
-            progressBar.setVisibility(View.GONE);
-        });
-    }
-
     private Observable<Double> paymentsObservable() {
         return Observable.just(calculateMonthlyPayment());
     }
@@ -104,5 +74,24 @@ public class MainActivity extends AppCompatActivity {
     private Double calculateMonthlyPayment() {
         monthlyPaymentAmount = Math.floor(FinanceUtil.calculatePMT(interestRate, termInMonths, loanAmount));
         return monthlyPaymentAmount;
+    }
+
+    private void displayBreakdown() {
+        double balanceTotal = monthlyPaymentAmount * termInMonths;
+        runOnUiThread(() -> {
+            calculatedMonthlyPayment.setText(FinanceUtil.getRandValue(monthlyPaymentAmount));
+            calculatedTotalInterest.setText(FinanceUtil.getRandValue((balanceTotal - loanAmount)));
+            calculatedTotalAmount.setText(FinanceUtil.getRandValue(balanceTotal));
+            progressBar.setVisibility(View.GONE);
+        });
+    }
+
+    @OnClick(R.id.btn_view_schedule)
+    public void viewSchedule (View view){
+        startActivity(ScheduleActivity.getStartIntent(this, monthlyPaymentAmount, termInMonths, loanAmount, interestRate));
+    }
+
+    private void showProgress() {
+        runOnUiThread(() -> progressBar.setVisibility(View.VISIBLE));
     }
 }

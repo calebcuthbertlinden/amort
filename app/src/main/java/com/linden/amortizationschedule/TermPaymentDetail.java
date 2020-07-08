@@ -5,16 +5,16 @@ import java.math.BigDecimal;
 public class TermPaymentDetail {
 
     private BigDecimal balance;
-    private BigDecimal interestBalance;
+    private BigDecimal capitalBalance;
     private BigDecimal interestPayment;
     private BigDecimal principlePayment;
     private BigDecimal payment;
     private int period;
 
-    TermPaymentDetail(BigDecimal balance, BigDecimal interestBalance, BigDecimal interestPayment,
+    TermPaymentDetail(BigDecimal balance, BigDecimal capitalBalance, BigDecimal interestPayment,
                       BigDecimal principlePayment, BigDecimal payment) {
         this.balance = balance;
-        this.interestBalance = interestBalance;
+        this.capitalBalance = capitalBalance;
         this.interestPayment = interestPayment;
         this.principlePayment = principlePayment;
         this.payment = payment;
@@ -28,12 +28,12 @@ public class TermPaymentDetail {
         this.balance = balance;
     }
 
-    public BigDecimal getInterestBalance() {
-        return interestBalance;
+    public BigDecimal getCapitalBalance() {
+        return capitalBalance;
     }
 
-    public void setInterestBalance(BigDecimal interestBalance) {
-        this.interestBalance = interestBalance;
+    public void setCapitalBalance(BigDecimal interestBalance) {
+        this.capitalBalance = interestBalance;
     }
 
     public BigDecimal getInterestPayment() {

@@ -3,14 +3,18 @@ package com.linden.amortizationschedule;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +45,7 @@ public class ScheduleActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.schedule_activity);
         ButterKnife.bind(this);
+        showProgress();
     }
 
     public static Intent getStartIntent(Context context, double monthlyPayment, int terms, double loanAmount,
@@ -58,17 +63,7 @@ public class ScheduleActivity extends AppCompatActivity {
         super.onResume();
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        showProgress();
         createSchedule();
-    }
-
-    @OnClick(R.id.export_table)
-    public void exportTable (View view){
-
-    }
-
-    private void showProgress() {
-        progressBar.setVisibility(View.VISIBLE);
     }
 
     @SuppressLint("CheckResult")
@@ -90,31 +85,70 @@ public class ScheduleActivity extends AppCompatActivity {
         }).dispose();
     }
 
-    private void displayScheduleTable() {
-        recyclerView.setVisibility(View.VISIBLE);
-        progressBar.setVisibility(View.GONE);
-        adapter = new AmortizationAdapter(termPayments);
-        recyclerView.setAdapter(adapter);
-    }
-
     private Observable<List<TermPaymentDetail>> paymentsObservable() {
-        return Observable.just(calucalteMonthlyPayment());
+        return Observable.just(calculateAllTermPayments());
     }
 
-    private List<TermPaymentDetail> calucalteMonthlyPayment() {
+    private List<TermPaymentDetail> calculateAllTermPayments() {
         List<TermPaymentDetail> monthly = new ArrayList<>();
         double monthlyPaymentAmount = getIntent().getDoubleExtra(MONTHLY_PAYMENT, 0);
         double total = monthlyPaymentAmount * getIntent().getIntExtra(TERM_IN_MONTHS, 0);
         while (total > 0) {
             total = total - monthlyPaymentAmount;
-            double interestPaid = monthlyPaymentAmount - (total*(getIntent().getDoubleExtra(INTEREST_RATE, 0)/12));
+            double capitalPaid = FinanceUtil.interestPaid(total, monthlyPaymentAmount,
+                    (getIntent().getDoubleExtra(INTEREST_RATE, 0)));
             monthly.add(new TermPaymentDetail(
                     BigDecimal.valueOf(total),
-                    BigDecimal.valueOf(Math.floor(total-(monthlyPaymentAmount-interestPaid))),
-                    BigDecimal.valueOf(Math.floor(interestPaid)),
-                    BigDecimal.valueOf(Math.floor(monthlyPaymentAmount-interestPaid)),
+                    BigDecimal.valueOf(Math.floor(total - (monthlyPaymentAmount - capitalPaid))),
+                    BigDecimal.valueOf(Math.floor(monthlyPaymentAmount - capitalPaid)),
+                    BigDecimal.valueOf(Math.floor(capitalPaid)),
                     BigDecimal.valueOf(Math.floor(monthlyPaymentAmount))));
         }
         return monthly;
+    }
+
+    @OnClick(R.id.export_table)
+    public void exportTable (View view){
+        try {
+            FileOutputStream out = openFileOutput("data.csv", Context.MODE_PRIVATE);
+
+            StringBuilder data = new StringBuilder();
+            data.append("Total balance,Monthly payment,Interest paid,Capital balance paid,Remaining capital balance");
+            for (TermPaymentDetail termPayment : termPayments) {
+                data.append("\n" + termPayment.getBalance().toString()+","
+                        +termPayment.getPayment().toString()+","
+                        +termPayment.getInterestPayment().toString()+","
+                        +termPayment.getPrinciplePayment().toString()+","
+                        +termPayment.getCapitalBalance().toString());
+            }
+
+            out.write((data.toString()).getBytes());
+            out.close();
+
+            Context context = getApplicationContext();
+            File file = new File(getFilesDir(), "data.csv");
+            Uri path = FileProvider.getUriForFile(context, "com.linden.amortizationschedule.fileprovider", file);
+            Intent fileIntent = new Intent(Intent.ACTION_SEND);
+            fileIntent.setType("text/csv");
+            fileIntent.putExtra(Intent.EXTRA_SUBJECT, "Data");
+            fileIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            fileIntent.putExtra(Intent.EXTRA_STREAM, path);
+            startActivity(Intent.createChooser(fileIntent, "Send mail"));
+
+
+        } catch(Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    private void showProgress() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void displayScheduleTable() {
+        recyclerView.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.GONE);
+        adapter = new AmortizationAdapter(termPayments);
+        recyclerView.setAdapter(adapter);
     }
 }
